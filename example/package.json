@@ -1,0 +1,27 @@
+{
+  "name": "react-redux-hooks-poc-example",
+  "homepage": "https://MrWolfZ.github.io/react-redux-hooks-poc",
+  "version": "0.0.0",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@mrwolfz/react-redux-hooks-poc": "file:../mrwolfz-react-redux-hooks-poc-0.1.0.tgz",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-redux": "^7.0.1",
+    "react-scripts": "^2.1.8",
+    "redux": "^4.0.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}
