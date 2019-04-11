@@ -1,10 +1,10 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { useCallback } from 'react';
+import { useCallback, Dispatch } from 'react';
 import { Store, createStore, Action, Reducer } from 'redux';
 import { Provider } from 'react-redux';
 import { render, fireEvent } from 'react-testing-library';
-import { useRedux, useReduxState } from './index'
+import { useRedux, useReduxState, useReduxDispatch } from './index'
 
 interface ExampleState {
   items: {
@@ -114,9 +114,56 @@ describe('hooks', () => {
       </Provider>
     )
 
-
     const { container } = render(<App />);
     const comp = container.querySelector('.test')!
     expect(comp.textContent).toBe('2');
   });
+
+  describe(useReduxDispatch.name, () => {
+    it('returns the same reference when called twice in a component', () => {
+      let dispatch1: Dispatch<any> = undefined!
+      let dispatch2: Dispatch<any> = undefined!
+
+      const Comp = () => {
+        dispatch1 = useReduxDispatch()
+        dispatch2 = useReduxDispatch()
+        return <div>test</div>
+      }
+
+      const App = () => (
+        <Provider store={store}>
+          <Comp />
+        </Provider>
+      )
+
+      render(<App />)
+
+      expect(dispatch1).toBe(dispatch2)
+    });
+
+    it('returns the same reference when called in two renders', () => {
+      let dispatch1: Dispatch<any> = undefined!
+      let dispatch2: Dispatch<any> = undefined!
+
+      const Comp = () => {
+        if (!dispatch1) {
+          dispatch1 = useReduxDispatch()
+        } else {
+          dispatch2 = useReduxDispatch()
+        }
+        return <div>test</div>
+      }
+
+      const App = () => (
+        <Provider store={store}>
+          <Comp />
+        </Provider>
+      )
+
+      render(<App />)
+      render(<App />)
+
+      expect(dispatch1).toBe(dispatch2)
+    });
+  })
 })

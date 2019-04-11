@@ -147,5 +147,5 @@ export const ExampleComponent = ({ id, label }) => {
  */
 export function useReduxDispatch(): Dispatch {
   const { store } = useContext(ReactReduxContext)
-  return store.dispatch.bind(store)
+  return store.dispatch
 }
