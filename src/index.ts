@@ -80,6 +80,7 @@ export function useReduxState<TState, TSlice = TState>(selector?: (state: TState
 
   useIsomorphicLayoutEffect(() => {
     latestSelector.current = safeSelector
+    latestSelectedState.current = selectedState
   })
 
   useEffect(() => {
