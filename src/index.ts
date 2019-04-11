@@ -20,27 +20,27 @@ const useIsomorphicLayoutEffect =
   typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
 /**
- * A hook to access the redux store from a component.
+ * A hook to access the redux state and dispatch function from a component.
  *
  * Usage:
  *
- * ```jsx
- * import React, { useCallback } from 'react'
- * import { useRedux } from '@mrwolfz/react-redux-hooks-poc'
- * 
- * export const ExampleComponent = ({ id }) => {
- *   const [item, dispatch] = useRedux(state => state.items[id])
- * 
- *   const deleteItem = useCallback(() => dispatch({ type: 'delete-item', id }), [id])
- * 
- *   return (
- *     <div>
- *       <span>{item.label}</span>
- *       <button onClick={deleteItem}>Delete item</button>
- *     </div>
- *   )
- * }
- * ```
+```jsx
+import React, { useCallback } from 'react'
+import { useRedux } from '@mrwolfz/react-redux-hooks-poc'
+
+export const ExampleComponent = ({ id }) => {
+  const [item, dispatch] = useRedux(state => state.items[id])
+
+  const deleteItem = useCallback(() => dispatch({ type: 'delete-item', id }), [id])
+
+  return (
+    <div>
+      <span>{item.label}</span>
+      <button onClick={deleteItem}>Delete item</button>
+    </div>
+  )
+}
+```
  */
 export function useRedux<TState, TSlice = TState>(selector?: (state: TState) => TSlice): [TSlice, Dispatch] {
   const selectedState = useReduxState(selector)
@@ -53,16 +53,15 @@ export function useRedux<TState, TSlice = TState>(selector?: (state: TState) => 
  *
  * Usage:
  *
- * ```jsx
- * import React from 'react'
- * import { useReduxState } from '@mrwolfz/react-redux-hooks-poc'
- * 
- * export const ExampleComponent = ({ id }) => {
- *   const item = useReduxState(state => state.items[id])
- * 
- *   return <div>{item.label}</div>
- * }
- * ```
+```jsx
+import React from 'react'
+import { useReduxState } from '@mrwolfz/react-redux-hooks-poc'
+
+export const ExampleComponent = ({ id }) => {
+  const item = useReduxState(state => state.items[id])
+  return <div>{item.label}</div>
+}
+```
  */
 export function useReduxState<TState, TSlice = TState>(selector?: (state: TState) => TSlice): TSlice {
   const safeSelector = selector || (s => s as any as TSlice)
@@ -130,22 +129,21 @@ export function useReduxState<TState, TSlice = TState>(selector?: (state: TState
  *
  * Usage:
  *
- * ```jsx
- * import React, { useCallback } from 'react'
- * import { useReduxDispatch } from '@mrwolfz/react-redux-hooks-poc'
- *
- * export const ExampleComponent = ({ id, label }) => {
- *   const dispatch = useReduxDispatch()
- *   const deleteItem = useCallback(() => dispatch({ type: 'delete-item', id }), [id])
- *
- *   return (
- *     <div>
- *       <span>{label}</span>
- *       <button onClick={deleteItem}>Delete item</button>
- *     </div>
- *   )
- * }
- * ```
+```jsx
+import React, { useCallback } from 'react'
+import { useReduxDispatch } from '@mrwolfz/react-redux-hooks-poc'
+
+export const ExampleComponent = ({ id, label }) => {
+  const dispatch = useReduxDispatch()
+  const deleteItem = useCallback(() => dispatch({ type: 'delete-item', id }), [id])
+  return (
+    <div>
+      <span>{label}</span>
+      <button onClick={deleteItem}>Delete item</button>
+    </div>
+  )
+}
+```
  */
 export function useReduxDispatch(): Dispatch {
   const { store } = useContext(ReactReduxContext)
