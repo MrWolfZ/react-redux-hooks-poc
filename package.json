@@ -1,6 +1,6 @@
 {
   "name": "@mrwolfz/react-redux-hooks-poc",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "A proof of concept for using react hooks to integrate with redux",
   "author": "MrWolfZ",
   "license": "MIT",
