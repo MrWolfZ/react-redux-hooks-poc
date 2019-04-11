@@ -64,13 +64,11 @@ const ItemList = () => {
 describe('hooks', () => {
   let store: Store<ExampleState>
 
-  const App = () => {
-    return (
-      <Provider store={store}>
-        <ItemList />
-      </Provider>
-    )
-  }
+  const App = () => (
+    <Provider store={store}>
+      <ItemList />
+    </Provider>
+  )
 
   beforeEach(() => {
     store = createStore(exampleStateReducer)
@@ -102,5 +100,23 @@ describe('hooks', () => {
 
     const items = container.querySelectorAll('.item')
     expect(items.length).toBe(1);
+  });
+
+  it('works without a selector', () => {
+    const Comp = () => {
+      const state = useReduxState<ExampleState>()
+      return <div className='test'>{Object.keys(state.items).length}</div>
+    }
+
+    const App = () => (
+      <Provider store={store}>
+        <Comp />
+      </Provider>
+    )
+
+
+    const { container } = render(<App />);
+    const comp = container.querySelector('.test')!
+    expect(comp.textContent).toBe('2');
   });
 })

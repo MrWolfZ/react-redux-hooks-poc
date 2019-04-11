@@ -42,9 +42,7 @@ const useIsomorphicLayoutEffect =
  * }
  * ```
  */
-export function useRedux<TState>(): [TState, Dispatch];
-export function useRedux<TState, TSlice>(selector: (state: TState) => TSlice): [TSlice, Dispatch];
-export function useRedux<TState, TSlice>(selector?: (state: TState) => TSlice): [TSlice, Dispatch] {
+export function useRedux<TState, TSlice = TState>(selector?: (state: TState) => TSlice): [TSlice, Dispatch] {
   const selectedState = useReduxState(selector)
   const dispatch = useReduxDispatch()
   return [selectedState, dispatch]
