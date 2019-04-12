@@ -1,7 +1,7 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { createStore } from 'redux';
 import { Provider } from 'react-redux';
-import { useRedux, useReduxState } from '@mrwolfz/react-redux-hooks-poc'
+import { useReduxActions, useReduxState } from '@mrwolfz/react-redux-hooks-poc'
 
 const initialExampleState = {
   items: {
@@ -29,9 +29,10 @@ const exampleStateReducer = (state = initialExampleState, action) => {
 }
 
 const Item = ({ id }) => {
-  const [item, dispatch] = useRedux(state => state.items[id])
-
-  const deleteItem = useCallback(() => dispatch({ type: 'delete-item', itemIdToDelete: id }), [id])
+  const item = useReduxState(state => state.items[id])
+  const { deleteItem } = useReduxActions({
+    deleteItem: () => ({ type: 'delete-item', itemIdToDelete: id })
+  }, [id])
 
   return (
     <div className='item'>
