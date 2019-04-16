@@ -7,7 +7,9 @@ import shallowEqual from './shallowEqual'
 // useLayoutEffect in the browser. We need useLayoutEffect to ensure the store
 // subscription callback always has the selector from the latest render commit
 // available, otherwise a store update may happen between render and commit,
-// which may cause missed updates
+// which may cause missed updates; we also must ensure the store subscription
+// is created synchronously, otherwise a store update may occur before the
+// subscription is created and an inconsistent state may be observed
 const useIsomorphicLayoutEffect =
   typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
@@ -46,7 +48,7 @@ export function useReduxState<TState, TSlice = TState>(selector?: (state: TState
     latestSelectedState.current = selectedState
   })
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     let didUnsubscribe = false
 
     function checkForUpdates() {

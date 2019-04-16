@@ -1,11 +1,10 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { useCallback, Dispatch, useState } from 'react';
+import { useCallback, useState, useContext } from 'react';
 import { Store, createStore, Action, Reducer } from 'redux';
-import { Provider } from 'react-redux';
-import { render, fireEvent } from 'react-testing-library';
-import { useRedux, useReduxState, useReduxDispatch } from './index'
-import { useReduxActions } from './useReduxActions';
+import { Provider, ReactReduxContext, Subscription } from 'react-redux';
+import { act, render, fireEvent } from 'react-testing-library';
+import { useRedux, useReduxState } from './index'
 
 interface ExampleState {
   items: {
@@ -62,7 +61,8 @@ const ItemList = () => {
   return <>{itemIds.map(id => <Item key={id} id={id}></Item>)}</>
 }
 
-describe('hooks', () => {
+// TODO: take these tests apart and only test this particular hook
+describe(useReduxState.name, () => {
   let store: Store<ExampleState>
 
   const App = () => (
@@ -120,6 +120,10 @@ describe('hooks', () => {
     expect(comp.textContent).toBe('2');
   });
 
+  // this test is based on an issue the library had at one point where
+  // we did not update the latest known store state inside the layout
+  // effect but only inside the subscription callback, which could lead
+  // to missed state updates as this test showed
   it('does not cache stale state inside subscription callback', () => {
     type Actions = { type: 'inc0' } | { type: 'inc2' }
 
@@ -180,153 +184,66 @@ describe('hooks', () => {
     expect(renderedNumbers).toEqual([1, 0, 1]);
   });
 
-  describe(useReduxDispatch.name, () => {
-    it('returns the same reference when called twice in a component', () => {
-      let dispatch1: Dispatch<any> = undefined!
-      let dispatch2: Dispatch<any> = undefined!
+  it('subscribes to the store synchronously', () => {
+    let rootSubscription: Subscription
 
-      const Comp = () => {
-        dispatch1 = useReduxDispatch()
-        dispatch2 = useReduxDispatch()
-        return <div>test</div>
-      }
+    const Parent = () => {
+      const { subscription } = useContext(ReactReduxContext)
+      rootSubscription = subscription
+      const count = useReduxState<number>()
+      return count > 0 ? <Child /> : null
+    }
 
-      const App = () => (
-        <Provider store={store}>
-          <Comp />
-        </Provider>
-      )
+    const Child = () => {
+      const count = useReduxState<number>()
+      return <div>{count}</div>
+    }
 
-      render(<App />)
+    const store = createStore((state: number = -1) => state + 1)
 
-      expect(dispatch1).toBe(dispatch2)
-    });
+    const App = () => (
+      <Provider store={store}>
+        <Parent />
+      </Provider>
+    )
 
-    it('returns the same reference when called in two renders', () => {
-      let dispatch1: Dispatch<any> = undefined!
-      let dispatch2: Dispatch<any> = undefined!
+    render(<App />)
 
-      const Comp = () => {
-        if (!dispatch1) {
-          dispatch1 = useReduxDispatch()
-        } else {
-          dispatch2 = useReduxDispatch()
-        }
-        return <div>test</div>
-      }
+    const spy = jest.spyOn(rootSubscription!, 'trySubscribe')
 
-      const App = () => (
-        <Provider store={store}>
-          <Comp />
-        </Provider>
-      )
-
-      render(<App />)
-      render(<App />)
-
-      expect(dispatch1).toBe(dispatch2)
-    });
+    expect(spy).toHaveBeenCalledTimes(0)
+    store.dispatch({ type: '' })
+    expect(spy).toHaveBeenCalledTimes(1)
   })
 
-  describe(useReduxActions.name, () => {
-    it('handles dispatches', () => {
-      type Actions = { type: 'inc1' } | { type: 'inc2' }
+  it('ignores transient errors in selector (e.g. due to stale props)', () => {
+    const Parent = () => {
+      const count = useReduxState<number>()
+      return <Child parentCount={count} />
+    }
 
-      const reducer: Reducer<number, Actions> = (state = 0, action) => {
-        if (action.type === 'inc1') {
-          return state + 1
+    const Child = ({ parentCount }: { parentCount: number }) => {
+      const result = useReduxState<number>(count => {
+        if (count !== parentCount) {
+          throw new Error()
         }
 
-        if (action.type === 'inc2') {
-          return state + 2
-        }
+        return count + parentCount;
+      })
 
-        return state
-      }
+      return <div>{result}</div>
+    }
 
-      const store = createStore(reducer)
+    const store = createStore((count: number = -1) => count + 1)
 
-      let renderedNumbers: number[] = []
-      const Comp = () => {
-        const n = useReduxState<number>()
-        const actions = useReduxActions({
-          inc1: () => ({ type: 'inc1' }),
-          inc2: () => ({ type: 'inc2' }),
-        })
-        renderedNumbers.push(n)
-        return (
-          <>
-            <div>{n}</div>
-            <button id='bInc1' onClick={actions.inc1} />
-            <button id='bInc2' onClick={actions.inc2} />
-          </>
-        )
-      }
+    const App = () => (
+      <Provider store={store}>
+        <Parent />
+      </Provider>
+    )
 
-      const App = () => (
-        <Provider store={store}>
-          <Comp />
-        </Provider>
-      )
+    render(<App />)
 
-      const { container } = render(<App />);
-      const bInc1 = container.querySelector('#bInc1')!
-      const bInc2 = container.querySelector('#bInc2')!
-
-      fireEvent.click(bInc1)
-      fireEvent.click(bInc2)
-
-      expect(renderedNumbers).toEqual([0, 1, 3]);
-    });
-
-    it('passes through arguments', () => {
-      type Actions = { type: 'adjust'; amount: number; isAdd: boolean }
-
-      const reducer: Reducer<number, Actions> = (state = 0, action) => {
-        if (action.type === 'adjust') {
-          return action.isAdd ? state + action.amount : state - action.amount
-        }
-
-        return state
-      }
-
-      const store = createStore(reducer)
-
-      let renderedNumbers: number[] = []
-      const Comp = () => {
-        const n = useReduxState<number>()
-        const actions = useReduxActions({
-          adjust: (amount: number, isAdd: boolean = true) => ({ type: 'adjust', amount, isAdd }),
-        })
-        renderedNumbers.push(n)
-        return (
-          <>
-            <div>{n}</div>
-            <button id='bInc1' onClick={() => actions.adjust(1)} />
-            <button id='bInc2' onClick={() => actions.adjust(2)} />
-            <button id='bDec1' onClick={() => actions.adjust(1, false)} />
-          </>
-        )
-      }
-
-      const App = () => (
-        <Provider store={store}>
-          <Comp />
-        </Provider>
-      )
-
-      const { container } = render(<App />);
-      const bInc1 = container.querySelector('#bInc1')!
-      const bInc2 = container.querySelector('#bInc2')!
-      const bDec1 = container.querySelector('#bDec1')!
-
-      fireEvent.click(bInc1)
-      fireEvent.click(bInc2)
-      fireEvent.click(bDec1)
-
-      expect(renderedNumbers).toEqual([0, 1, 3, 2]);
-    });
-
-    // TODO: test for deps
+    expect(() => store.dispatch({ type: '' })).not.toThrowError()
   })
 })

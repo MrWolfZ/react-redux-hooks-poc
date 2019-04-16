@@ -19,7 +19,7 @@ npm install --save @mrwolfz/react-redux-hooks-poc
 `useRedux` provides a state slice and the dispatch function.
 
 ```tsx
-import * as React from 'react'
+import React from 'react'
 import { useRedux } from '@mrwolfz/react-redux-hooks-poc'
 
 export const ExampleComponent = ({ id }) => {
@@ -39,7 +39,7 @@ export const ExampleComponent = ({ id }) => {
 Alternatively `useReduxState` and `useReduxDispatch` can be used separately.
 
 ```tsx
-import * as React from 'react'
+import React from 'react'
 import { useReduxState, useReduxDispatch } from '@mrwolfz/react-redux-hooks-poc'
 
 export const ExampleComponent = ({ id }) => {
@@ -52,6 +52,31 @@ export const ExampleComponent = ({ id }) => {
     <div>
       <span>{item.label}</span>
       <button onClick={deleteItem}>Delete item</button>
+    </div>
+  )
+}
+```
+
+`useReduxActions` allows creating functions that dispatch actions.
+
+```jsx
+import React, { useCallback } from 'react'
+import { useReduxActions } from '@mrwolfz/react-redux-hooks-poc'
+
+const deleteItem = ({ id }) => ({
+  type: 'delete-item',
+  itemIdToDelete: id,
+})
+
+export const ExampleComponent = ({ id, label }) => {
+  const actions = useReduxActions({
+    deleteItem: () => deleteItem(id),
+  }, [id])
+
+  return (
+    <div>
+      <span>{label}</span>
+      <button onClick={actions.deleteItem}>Delete item</button>
     </div>
   )
 }
