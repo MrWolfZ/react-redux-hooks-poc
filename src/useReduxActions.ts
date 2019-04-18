@@ -1,13 +1,11 @@
-import { AnyAction } from 'redux';
+import { AnyAction, bindActionCreators, ActionCreatorsMapObject, ActionCreator } from 'redux';
 import { useReduxDispatch } from './useReduxDispatch';
 import { useMemo } from 'react';
 
-export type Parameters<T> = T extends (...args: infer T) => any ? T : never;
-export type ActionsMap = { [key: string]: (...args: any[]) => AnyAction }
-export type BoundActionsMap<T> = { [key in keyof T]: (...args: Parameters<T[key]>) => void }
-
 /**
  * A hook to bind action creators to the redux store's dispatch function.
+ * Supports passing a single action creator, an array/tuple of action
+ * creators, or an object of actions creators.
  *
  * Usage:
  *
@@ -21,14 +19,23 @@ const deleteItem = ({ id }) => ({
 })
 
 export const ExampleComponent = ({ id, label }) => {
-  const actions = useReduxActions({
+  // supports passing an object of action creators
+  const { deleteItem: deleteItemViaObject } = useReduxActions({
     deleteItem: () => deleteItem(id),
   }, [id])
+
+  // supports passing an array/tuple of action creators
+  const [deleteItemViaArray] = useReduxActions([
+    () => deleteItem(id),
+  ], [id])
+
+  // supports passing a single action creator
+  const deleteItem = useReduxActions(() => deleteItem(id), [id])
 
   return (
     <div>
       <span>{label}</span>
-      <button onClick={actions.deleteItem}>Delete item</button>
+      <button onClick={deleteItem}>Delete item</button>
     </div>
   )
 }
@@ -38,13 +45,28 @@ export const ExampleComponent = ({ id, label }) => {
  * above the `deleteItem` action has access to the event parameter of the
  * onClick event
  */
-export function useReduxActions<T extends ActionsMap>(actions: T, deps?: ReadonlyArray<any>): BoundActionsMap<T> {
+export function useReduxActions<T extends [ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>], A = AnyAction>(actions: T, deps?: ReadonlyArray<any>): T
+export function useReduxActions<T extends [ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>], A = AnyAction>(actions: T, deps?: ReadonlyArray<any>): T
+export function useReduxActions<T extends [ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>], A = AnyAction>(actions: T, deps?: ReadonlyArray<any>): T
+export function useReduxActions<T extends [ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>], A = AnyAction>(actions: T, deps?: ReadonlyArray<any>): T
+export function useReduxActions<T extends [ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>], A = AnyAction>(actions: T, deps?: ReadonlyArray<any>): T
+export function useReduxActions<T extends [ActionCreator<A>, ActionCreator<A>, ActionCreator<A>, ActionCreator<A>], A = AnyAction>(actions: T, deps?: ReadonlyArray<any>): T
+export function useReduxActions<T extends [ActionCreator<A>, ActionCreator<A>, ActionCreator<A>], A = AnyAction>(actions: T, deps?: ReadonlyArray<any>): T
+export function useReduxActions<T extends [ActionCreator<A>, ActionCreator<A>], A = AnyAction>(actions: T, deps?: ReadonlyArray<any>): T
+export function useReduxActions<T extends [ActionCreator<A>], A = AnyAction>(actions: T, deps?: ReadonlyArray<any>): T
+export function useReduxActions<T extends ReadonlyArray<ActionCreator<A>>, A = AnyAction>(actions: T, deps?: ReadonlyArray<any>): T
+export function useReduxActions<T extends ActionCreatorsMapObject<A>, A = AnyAction>(actions: T, deps?: ReadonlyArray<any>): T
+export function useReduxActions<T extends ActionCreator<A>, A = ReturnType<T>>(actions: T, deps?: ReadonlyArray<any>): T
+export function useReduxActions<T extends ActionCreatorsMapObject<A> | ActionCreator<A> | ReadonlyArray<ActionCreator<A>>, A = AnyAction>(actions: T, deps?: ReadonlyArray<any>): T {
   const dispatch = useReduxDispatch()
   return useMemo(
-    () => Object.keys(actions).reduce((acc, key) => {
-      acc[key] = (...args: any[]) => dispatch(actions[key](...args))
-      return acc
-    }, {} as BoundActionsMap<T>),
+    () => {
+      if (Array.isArray(actions)) {
+        return actions.map(a => bindActionCreators(a as ActionCreator<A>, dispatch)) as any as T
+      }
+
+      return bindActionCreators<any, any>(actions, dispatch) as T
+    },
     deps,
   )
 }

@@ -7,15 +7,15 @@ import { useReduxActions } from './useReduxActions';
 
 describe(useReduxActions.name, () => {
   it('handles dispatches', () => {
-    type Actions = { type: 'inc1' } | { type: 'inc2' }
+    type Actions = { type: 'inc1' } | { type: 'inc', amount: number }
 
     const reducer: Reducer<number, Actions> = (state = 0, action) => {
       if (action.type === 'inc1') {
         return state + 1
       }
 
-      if (action.type === 'inc2') {
-        return state + 2
+      if (action.type === 'inc') {
+        return state + action.amount
       }
 
       return state
@@ -28,7 +28,7 @@ describe(useReduxActions.name, () => {
       const n = useReduxState<number>()
       const actions = useReduxActions({
         inc1: () => ({ type: 'inc1' }),
-        inc2: () => ({ type: 'inc2' }),
+        inc2: () => ({ type: 'inc', amount: 2 }),
       })
       renderedNumbers.push(n)
       return (
@@ -36,6 +36,99 @@ describe(useReduxActions.name, () => {
           <div>{n}</div>
           <button id='bInc1' onClick={actions.inc1} />
           <button id='bInc2' onClick={actions.inc2} />
+        </>
+      )
+    }
+
+    const App = () => (
+      <Provider store={store}>
+        <Comp />
+      </Provider>
+    )
+
+    const { container } = render(<App />);
+    const bInc1 = container.querySelector('#bInc1')!
+    const bInc2 = container.querySelector('#bInc2')!
+
+    fireEvent.click(bInc1)
+    fireEvent.click(bInc2)
+
+    expect(renderedNumbers).toEqual([0, 1, 3]);
+  });
+
+  it('supports array form', () => {
+    type Actions = { type: 'inc1' } | { type: 'inc', amount: number }
+
+    const reducer: Reducer<number, Actions> = (state = 0, action) => {
+      if (action.type === 'inc1') {
+        return state + 1
+      }
+
+      if (action.type === 'inc') {
+        return state + action.amount
+      }
+
+      return state
+    }
+
+    const store = createStore(reducer)
+
+    let renderedNumbers: number[] = []
+    const Comp = () => {
+      const n = useReduxState<number>()
+      const [inc1, inc] = useReduxActions([
+        () => ({ type: 'inc1' }),
+        (amount: number) => ({ type: 'inc', amount }),
+      ])
+      renderedNumbers.push(n)
+      return (
+        <>
+          <div>{n}</div>
+          <button id='bInc1' onClick={inc1} />
+          <button id='bInc2' onClick={() => inc(2)} />
+        </>
+      )
+    }
+
+    const App = () => (
+      <Provider store={store}>
+        <Comp />
+      </Provider>
+    )
+
+    const { container } = render(<App />);
+    const bInc1 = container.querySelector('#bInc1')!
+    const bInc2 = container.querySelector('#bInc2')!
+
+    fireEvent.click(bInc1)
+    fireEvent.click(bInc2)
+
+    expect(renderedNumbers).toEqual([0, 1, 3]);
+  });
+
+  it('supports single function form', () => {
+    type Actions = { type: 'inc', amount: number }
+
+    const reducer: Reducer<number, Actions> = (state = 0, action) => {
+      if (action.type === 'inc') {
+        return state + action.amount
+      }
+
+      return state
+    }
+
+    const store = createStore(reducer)
+
+    let renderedNumbers: number[] = []
+    const Comp = () => {
+      const n = useReduxState<number>()
+      const inc = useReduxActions((amount: number) => ({ type: 'inc', amount }))
+      renderedNumbers.push(n)
+      return (
+        <>
+          <div>{n}</div>
+          <button id='bInc1' onClick={() => inc(1)} />
+          <button id='bInc2' onClick={() => inc(2)} />
         </>
       )
     }
