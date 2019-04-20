@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom';
 import { useCallback, useState, useContext } from 'react';
 import { Store, createStore, Action, Reducer } from 'redux';
 import { Provider, ReactReduxContext, Subscription } from 'react-redux';
-import { act, render, fireEvent } from 'react-testing-library';
+import { render, fireEvent } from 'react-testing-library';
 import { useRedux, useReduxState } from './index'
 
 interface ExampleState {
@@ -245,5 +245,35 @@ describe(useReduxState.name, () => {
     render(<App />)
 
     expect(() => store.dispatch({ type: '' })).not.toThrowError()
+  })
+
+  it('correlates the subscription callback error with a following error during rendering', () => {
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => { })
+
+    const Comp = () => {
+      const result = useReduxState<number>(count => {
+        if (count > 0) {
+          throw new Error('foo')
+        }
+
+        return count;
+      })
+
+      return <div>{result}</div>
+    }
+
+    const store = createStore((count: number = -1) => count + 1)
+
+    const App = () => (
+      <Provider store={store}>
+        <Comp />
+      </Provider>
+    )
+
+    render(<App />)
+
+    expect(() => store.dispatch({ type: '' })).toThrow(/The error may be correlated/)
+
+    spy.mockRestore()
   })
 })
