@@ -2,7 +2,7 @@ import React from 'react';
 import { createStore } from 'redux';
 import { Provider } from 'react-redux';
 import { useReduxActions, useReduxState } from '@mrwolfz/react-redux-hooks-poc'
-
+// Initial state
 const initialExampleState = {
   items: {
     '1': {
